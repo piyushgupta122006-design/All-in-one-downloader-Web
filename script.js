@@ -22,10 +22,10 @@ async function fetchVideoOptions() {
     qualityDiv.innerHTML = ''; 
 
     try {
-        console.log("Fetching Qualities for ID:", videoId);
+        console.log("Fetching Link for ID:", videoId);
 
-        // 🔄 NEW ENDPOINT: /get_available_quality
-        const response = await fetch(`https://${API_HOST}/get_available_quality/${videoId}`, {
+        // ✅ BACK TO BASICS: Wahi endpoint jo chala tha
+        const response = await fetch(`https://${API_HOST}/download_video/${videoId}`, {
             method: 'GET',
             headers: {
                 'x-rapidapi-key': API_KEY,
@@ -34,71 +34,52 @@ async function fetchVideoOptions() {
         });
 
         const data = await response.json();
-        console.log("Quality Data:", data); // Isko Console mein dekhna zaroori hai
+        console.log("API Data:", data); 
 
-        // 1. Basic Info Set (Agar API title deti hai)
-        // Kuch APIs quality endpoint pe title nahi deti, toh hum generic title rakhenge
+        // Title handling
         if (data.title) titleText.innerText = data.title;
-        else titleText.innerText = "Video Options Ready";
-        
-        if (data.thumbnail) {
-            thumbImg.src = data.thumbnail;
-            thumbImg.classList.remove('hidden');
-        }
+        else titleText.innerText = "Video Ready";
 
-        // 2. Data Finder (Kyunki humein structure nahi pata)
-        // Hum alag-alag keys check karenge jahan list ho sakti hai
-        let list = [];
-        
-        // RapidAPI ki common keys check karte hain
-        if (Array.isArray(data)) list = data; // Kabhi kabhi seedha array aata hai
-        else if (data.data) list = data.data;
-        else if (data.formats) list = data.formats;
-        else if (data.streams) list = data.streams;
-        else if (data.qualities) list = data.qualities;
+        // Link Finder (Simple & Strong)
+        // Screenshot me humne dekha tha ki link 'data.file' ya 'data.url' me aata hai
+        let finalLink = data.file || data.url || data.downloadUrl || data.link;
 
-        // 3. Button Generation
-        if (list.length > 0) {
+        if (finalLink) {
+            // Thumbnail handling (Optional)
+            if (data.picture || data.thumbnail) {
+                thumbImg.src = data.picture || data.thumbnail;
+                thumbImg.classList.remove('hidden');
+            }
+
+            // Ek hi solid button banayenge
+            const btn = document.createElement('a');
+            btn.className = 'btn-quality';
+            btn.href = finalLink;
+            btn.target = '_blank';
             
-            // Filter Function call
-            const uniqueOptions = processOptions(list);
+            // Text thoda professional likhenge
+            btn.innerHTML = `Download Best Quality <i class="fa-solid fa-download"></i>`;
+            btn.style.width = "100%"; // Button ko bada dikhao
+            btn.style.textAlign = "center";
+            btn.style.justifyContent = "center";
 
-            uniqueOptions.forEach(opt => {
-                const btn = document.createElement('a');
-                btn.className = 'btn-quality';
-                
-                // Link Logic: Kabhi 'url' hota hai, kabhi 'link'
-                btn.href = opt.url || opt.link || opt.downloadUrl || '#';
-                
-                // Agar link nahi hai (sirf info hai), toh click event lagao (Future upgrade)
-                if(btn.href === '#' || btn.href.endsWith('#')) {
-                    btn.onclick = () => alert("Direct link nahi mila, sorry!");
-                } else {
-                    btn.target = '_blank';
-                }
+            qualityDiv.appendChild(btn);
 
-                // Label Logic
-                let label = opt.quality || opt.qualityLabel || opt.note || 'Video';
-                
-                // Audio Check (Rough Logic)
-                // Agar label mein "no audio" likha ho ya mute flag ho
-                const isMute = (label.toLowerCase().includes('mute') || opt.no_audio);
-
-                if (isMute) {
-                    btn.innerHTML = `<span>${label}</span> <span class="tag-mute">No Sound</span>`;
-                } else {
-                    btn.innerHTML = `<span>${label}</span> 🔊`;
-                    btn.style.borderColor = "#4ade80"; // Green for good audio
-                }
-
-                qualityDiv.appendChild(btn);
-            });
+            // Warning agar API time le rahi ho
+            if(data.comment) {
+                const msg = document.createElement('p');
+                msg.style.fontSize = "11px";
+                msg.style.color = "#fbbf24";
+                msg.style.marginTop = "5px";
+                msg.innerText = "Note: Agar click par error aaye, toh 10 sec ruk kar try karna.";
+                qualityDiv.appendChild(msg);
+            }
 
             result.classList.remove('hidden');
 
         } else {
-            console.error("List empty or unknown structure:", data);
-            alert("Qualities list nahi mili. Console ka screenshot bhejo!");
+            console.error("Link missing:", data);
+            alert("Sorry, is video ka link API nahi de pa rahi.");
         }
 
     } catch (error) {
@@ -107,15 +88,6 @@ async function fetchVideoOptions() {
     } finally {
         loader.classList.add('hidden');
     }
-}
-
-// 🧠 Helper: List ko saaf karne ke liye
-function processOptions(rawList) {
-    // Agar list simple strings hai (e.g., ["720p", "360p"]) toh object banao
-    if (typeof rawList[0] === 'string') {
-        return rawList.map(item => ({ quality: item, url: '#' }));
-    }
-    return rawList;
 }
 
 function extractVideoID(url) {
