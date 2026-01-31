@@ -41,27 +41,29 @@ async function fetchVideoOptions() {
         else titleText.innerText = "Video Ready";
 
         // Link Finder (Simple & Strong)
-        // Screenshot me humne dekha tha ki link 'data.file' ya 'data.url' me aata hai
+        // Screenshot me humne dekha tha ki link 'data.file' me aata hai
         let finalLink = data.file || data.url || data.downloadUrl || data.link;
 
         if (finalLink) {
-            // Thumbnail handling (Optional)
+            // Thumbnail handling
             if (data.picture || data.thumbnail) {
                 thumbImg.src = data.picture || data.thumbnail;
                 thumbImg.classList.remove('hidden');
             }
 
-            // Ek hi solid button banayenge
+            // Button Create Karo
             const btn = document.createElement('a');
             btn.className = 'btn-quality';
             btn.href = finalLink;
             btn.target = '_blank';
             
             // Text thoda professional likhenge
-            btn.innerHTML = `Download Best Quality <i class="fa-solid fa-download"></i>`;
+            btn.innerHTML = `Download Video <i class="fa-solid fa-download"></i>`;
             btn.style.width = "100%"; // Button ko bada dikhao
             btn.style.textAlign = "center";
             btn.style.justifyContent = "center";
+            btn.style.background = "#22c55e"; // Green color
+            btn.style.borderColor = "#22c55e";
 
             qualityDiv.appendChild(btn);
 
@@ -70,8 +72,8 @@ async function fetchVideoOptions() {
                 const msg = document.createElement('p');
                 msg.style.fontSize = "11px";
                 msg.style.color = "#fbbf24";
-                msg.style.marginTop = "5px";
-                msg.innerText = "Note: Agar click par error aaye, toh 10 sec ruk kar try karna.";
+                msg.style.marginTop = "8px";
+                msg.innerText = "Note: Agar error aaye toh 10 second ruk kar try karna.";
                 qualityDiv.appendChild(msg);
             }
 
@@ -79,7 +81,7 @@ async function fetchVideoOptions() {
 
         } else {
             console.error("Link missing:", data);
-            alert("Sorry, is video ka link API nahi de pa rahi.");
+            alert("Sorry, is video ka link API nahi de pa rahi. Koi aur video try karo.");
         }
 
     } catch (error) {
