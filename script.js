@@ -1,7 +1,7 @@
-// ⚠️ STEP 1: API Key maine screenshot se le kar daal di hai
+// ⚠️ STEP 1: API Key wahi rahegi (967c...)
 const API_KEY = '967c36ab2dmshc4c3bf8bddd53f6p1002dejsn88b15cc6076d'; 
 
-// ✅ HOST: Nayi wali API ka Host
+// ✅ HOST: Same host
 const API_HOST = 'youtube-video-fast-downloader-24-7.p.rapidapi.com'; 
 
 async function downloadVideo() {
@@ -9,16 +9,14 @@ async function downloadVideo() {
     const url = urlInput.value.trim();
     const loader = document.getElementById('loader');
     const result = document.getElementById('result');
-    const statusText = document.getElementById('videoTitle'); // Title element
+    const statusText = document.getElementById('videoTitle');
     const dlButton = document.getElementById('dlButton');
     
     if (!url) { alert("Link paste kar bhai!"); return; }
 
-    // 🧠 LOGIC: Link se ID nikalna (e.g. youtube.com/watch?v=ABC -> ABC)
     const videoId = extractVideoID(url);
-
     if (!videoId) {
-        alert("Ye YouTube link sahi nahi lag raha. Check karo.");
+        alert("Link sahi nahi hai. Check karo.");
         return;
     }
 
@@ -26,10 +24,11 @@ async function downloadVideo() {
     result.classList.add('hidden');
 
     try {
-        console.log("Fetching ID:", videoId);
+        console.log("Fetching Download Link for ID:", videoId);
 
-        // ✅ API Call: Endpoint '/get-video-info/' use kar rahe hain
-        const response = await fetch(`https://${API_HOST}/get-video-info/${videoId}`, {
+        // 🔄 MAJOR CHANGE: URL Structure screenshot ke hisab se badal diya hai
+        // Format: /download_video/{ID}
+        const response = await fetch(`https://${API_HOST}/download_video/${videoId}`, {
             method: 'GET',
             headers: {
                 'x-rapidapi-key': API_KEY,
@@ -38,34 +37,29 @@ async function downloadVideo() {
         });
 
         const data = await response.json();
-        console.log("API Data:", data); 
+        console.log("Download Data:", data); 
 
-        // 🎯 Data Extraction Logic
+        // 🎯 Link Finder
+        // Is endpoint se usually direct 'url' ya 'downloadUrl' milta hai
         let downloadLink = null;
-        let title = data.title || "YouTube Video";
-        
-        // Is API me links aksar 'streams' ya 'formats' me hote hain
-        if (data.streams && data.streams.length > 0) {
-            // Sabse pehla wala format utha lo (usually best quality)
-            downloadLink = data.streams[0].url;
-        } 
-        else if (data.link) {
-            downloadLink = data.link;
-        }
-        else if (data.downloadUrl) {
-            downloadLink = data.downloadUrl;
-        }
+        let title = "Video Ready to Save";
+
+        if (data.url) downloadLink = data.url;
+        else if (data.downloadUrl) downloadLink = data.downloadUrl;
+        else if (data.link) downloadLink = data.link;
+
+        if (data.title) title = data.title;
 
         if (downloadLink) {
-            // UI Update
             statusText.innerText = title;
             dlButton.href = downloadLink;
+            // Button text update
+            dlButton.innerHTML = `Save Video <i class="fa-solid fa-download"></i>`;
             
-            // Result Show
             result.classList.remove('hidden');
         } else {
-            console.error("Data:", data);
-            alert("Download link nahi mila. Console check karo.");
+            console.error("Link issue:", data);
+            alert("API ne link nahi diya. Console check karo 'Download Data' ke liye.");
         }
 
     } catch (error) {
@@ -76,7 +70,7 @@ async function downloadVideo() {
     }
 }
 
-// 🛠️ Helper Function: YouTube Link se ID nikalne ke liye
+// 🛠️ Helper: ID Extractor
 function extractVideoID(url) {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
