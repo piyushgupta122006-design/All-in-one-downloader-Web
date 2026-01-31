@@ -1,4 +1,4 @@
-// ⚠️ STEP 1: API Key wahi rahegi (967c...)
+// ⚠️ STEP 1: API Key wahi rahegi
 const API_KEY = '967c36ab2dmshc4c3bf8bddd53f6p1002dejsn88b15cc6076d'; 
 
 // ✅ HOST: Same host
@@ -26,8 +26,7 @@ async function downloadVideo() {
     try {
         console.log("Fetching Download Link for ID:", videoId);
 
-        // 🔄 MAJOR CHANGE: URL Structure screenshot ke hisab se badal diya hai
-        // Format: /download_video/{ID}
+        // API Call
         const response = await fetch(`https://${API_HOST}/download_video/${videoId}`, {
             method: 'GET',
             headers: {
@@ -39,27 +38,33 @@ async function downloadVideo() {
         const data = await response.json();
         console.log("Download Data:", data); 
 
-        // 🎯 Link Finder
-        // Is endpoint se usually direct 'url' ya 'downloadUrl' milta hai
+        // 🎯 Link Finder (UPDATED LOGIC)
         let downloadLink = null;
-        let title = "Video Ready to Save";
+        let title = "Click to Download Video";
 
-        if (data.url) downloadLink = data.url;
+        // ✅ Yahan maine 'data.file' add kiya hai jo screenshot me dikh raha tha
+        if (data.file) downloadLink = data.file;
+        else if (data.url) downloadLink = data.url;
         else if (data.downloadUrl) downloadLink = data.downloadUrl;
-        else if (data.link) downloadLink = data.link;
 
+        // Title handling
         if (data.title) title = data.title;
 
         if (downloadLink) {
             statusText.innerText = title;
             dlButton.href = downloadLink;
-            // Button text update
             dlButton.innerHTML = `Save Video <i class="fa-solid fa-download"></i>`;
             
+            // Warning agar API processing time mang rahi ho
+            if(data.comment) {
+                console.warn(data.comment);
+                statusText.innerText += " (Might take 10s to process)";
+            }
+
             result.classList.remove('hidden');
         } else {
             console.error("Link issue:", data);
-            alert("API ne link nahi diya. Console check karo 'Download Data' ke liye.");
+            alert("API ne link nahi diya. Console check karo.");
         }
 
     } catch (error) {
